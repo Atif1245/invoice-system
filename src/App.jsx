@@ -1,8 +1,8 @@
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { 
-  Briefcase, 
-  BarChart2, 
-  Search, 
+import {
+  Briefcase,
+  BarChart2,
+  Search,
   CloudUpload,
   LogOut,
   Zap,
@@ -43,7 +43,7 @@ function App() {
 
   // Upload handlers
   const triggerUpload = () => {
-    if(fileInputRef.current) fileInputRef.current.click();
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleFileChange = async (e) => {
@@ -51,19 +51,11 @@ function App() {
       const file = e.target.files[0];
       const fileURL = URL.createObjectURL(file);
 
-      // Check API Key
-      if (!apiKey) {
-         alert("Please paste your Google AI Key in the sidebar box before uploading! This is required to read real pictures.");
-         if (fileInputRef.current) fileInputRef.current.value = "";
-         return;
-      }
-      let currentKey = apiKey;
-
       setIsAnalyzing(true);
-      
+
       try {
         const { processImageWithGemini } = await import('./services/ai.js');
-        const extractedData = await processImageWithGemini(file, currentKey);
+        const extractedData = await processImageWithGemini(file);
 
         if (extractedData.isInvoice === false) {
           alert(`UPLOAD REJECTED!\n\nAI Reason: ${extractedData.error}`);
@@ -85,7 +77,7 @@ function App() {
         }
 
         setUploadedFile(fileURL);
-        
+
         // Add to history
         const newItem = {
           id: Date.now(),
@@ -96,18 +88,12 @@ function App() {
           tax: extractedData.tax || "0",
           total: extractedData.total || "0"
         };
-        
+
         setUploadHistory(prev => [newItem, ...prev]);
         navigate('/');
       } catch (error) {
         console.error(error);
-        if (error?.message?.includes('invalid') || error?.message?.includes('API key not valid') || error?.message?.includes('API Key is invalid')) {
-           setApiKey('');
-           localStorage.removeItem('gemini_api_key');
-           alert("Your API Key was invalid, so I removed it! The red box has reappeared on the left sidebar. Please grab a NEW key, paste it carefully, and try uploading again.");
-        } else {
-           alert("Failed to process image. Details: " + error.message);
-        }
+        alert("Failed to process image. Details: " + error.message);
       } finally {
         setIsAnalyzing(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -165,22 +151,6 @@ function App() {
           </NavLink>
 
           <div className="sidebar-upload-section" style={{ marginTop: 'auto' }}>
-            {!apiKey && (
-              <div style={{ padding: '12px', background: 'rgba(255, 60, 60, 0.1)', borderRadius: '8px', marginBottom: '16px', border: '1px solid rgba(255, 60, 60, 0.3)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>Google AI Key Required</div>
-                <input 
-                  type="password" 
-                  placeholder="Paste AI Key here..." 
-                  onChange={(e) => { 
-                    setApiKey(e.target.value); 
-                    localStorage.setItem('gemini_api_key', e.target.value); 
-                  }} 
-                  style={{ width: '100%', padding: '8px', fontSize: '0.8rem', borderRadius: '4px', background: '#1a1d2d', border: '1px solid var(--border-color)', color: 'white' }} 
-                />
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: '#ff4d4d', display: 'block', marginTop: '8px', textDecoration: 'underline' }}>Click here to get a Free Key</a>
-              </div>
-            )}
-
             <div className="sidebar-upload-title">NEW UPLOAD</div>
             <div className="sidebar-drag-zone" onClick={isAnalyzing ? null : triggerUpload} style={{ opacity: isAnalyzing ? 0.5 : 1, cursor: isAnalyzing ? 'not-allowed' : 'pointer' }}>
               <input
@@ -191,20 +161,20 @@ function App() {
                 accept="image/*,application/pdf"
               />
               {isAnalyzing ? (
-                 <div style={{ padding: '20px 0'}}>
-                   <Zap size={32} color="var(--primary-accent)" style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite' }} />
-                   <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--primary-accent)' }}>AI Scanning...</div>
-                 </div>
+                <div style={{ padding: '20px 0' }}>
+                  <Zap size={32} color="var(--primary-accent)" style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite' }} />
+                  <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--primary-accent)' }}>AI Scanning...</div>
+                </div>
               ) : (
-                 <>
-                   <CloudUpload size={32} color="var(--primary-accent)" style={{ marginBottom: '12px' }} />
-                   <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                     Upload Document
-                   </div>
-                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                     Supports: PDF, JPG, PNG
-                   </div>
-                 </>
+                <>
+                  <CloudUpload size={32} color="var(--primary-accent)" style={{ marginBottom: '12px' }} />
+                  <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    Upload Document
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    Supports: PDF, JPG, PNG
+                  </div>
+                </>
               )}
             </div>
           </div>

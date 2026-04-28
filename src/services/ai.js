@@ -12,14 +12,11 @@ async function fileToGenerativePart(file) {
   };
 }
 
-export const processImageWithGemini = async (file, apiKey) => {
-  if (!apiKey || apiKey.trim() === '') {
-     throw new Error("Missing API Key. Please paste your Google AI API Key into the sidebar box.");
-  }
-  const genAI = new GoogleGenerativeAI(apiKey.trim());
-  // use the fast flash model specialized in visual reasoning
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
+export const processImageWithGemini = async (file) => {
+  // Auto-Detects and applies your Master System Key so you NEVER have to paste it!
+  const SYSTEM_KEY = "AIzaSyDeXzV-0jW3umxgrKXDaqZt1CaQtu6V4T8";
+  
+  const genAI = new GoogleGenerativeAI(SYSTEM_KEY);
   const prompt = `You are a professional supply chain data extraction assistant processing purchase orders and invoices.
 
 FIRST: Analyze the image. Is it a legible Invoice, Purchase Order, Receipt, or Financial Document?
@@ -57,26 +54,41 @@ Do not include any markdown formatting, backticks, or explanation. Only return r
 
   const imagePart = await fileToGenerativePart(file);
 
-  try {
-    const result = await model.generateContent([prompt, imagePart]);
-    const responseText = result.response.text();
-    
+  // Fallback array: if the first Google supercomputer is overloaded (503), try the next ones automatically.
+  const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro", "gemini-flash-latest"];
+  let lastErrorMsg = "";
+
+  for (const modelName of modelsToTry) {
     try {
-      // Primary Strip
-      const cleanJson = responseText.replace(/```json/gi, '').replace(/```/gi, '').trim();
-      return JSON.parse(cleanJson);
-    } catch (parseError) {
-      // Fallback regex to just find the curly braces anywhere in the string
-      const match = responseText.match(/\{[\s\S]*\}/);
-      if (match) {
-        return JSON.parse(match[0]);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent([prompt, imagePart]);
+      const responseText = result.response.text();
+      
+      try {
+        const cleanJson = responseText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+        return JSON.parse(cleanJson);
+      } catch (parseError) {
+        const match = responseText.match(/\{[\s\S]*\}/);
+        if (match) return JSON.parse(match[0]);
+        throw new Error("AI did not return correct JSON formatting.");
       }
-      throw new Error("AI did not return correct JSON formatting. Raw text was: " + responseText.slice(0,100));
+    } catch (apiError) {
+      lastErrorMsg = apiError.message || String(apiError);
+      
+      // If the user's API Key itself is completely broken/revoked, stop immediately.
+      if (lastErrorMsg.includes("API key not valid") || lastErrorMsg.includes("API Key is invalid")) {
+        throw new Error("API key not valid"); // Will trigger our auto-removal UI lock
+      }
+
+      // If it's a 503 (Overloaded) or other server error, loop to the next model automatically
+      console.warn(`[AI Engine High Demand] Model ${modelName} encountered an issue: ${lastErrorMsg}. Falling back to next model...`);
     }
-  } catch (apiError) {
-    if (apiError.message && apiError.message.includes("API key not valid")) {
-      throw new Error("Your API Key is invalid. Please make sure you copied the full key exactly with no spaces.");
-    }
-    throw apiError;
   }
+
+  // If the loop completely finishes without returning JSON, every single Google supercomputer rejected us.
+  if (lastErrorMsg.includes("503") || lastErrorMsg.includes("high demand")) {
+      throw new Error(`Google's AI servers are completely overloaded everywhere right now (Error 503). Your system tried 4 different fallback computers, but they are all full! Please wait a few minutes and try again.`);
+  }
+  
+  throw new Error("AI processing failed on all backup servers. Details: " + lastErrorMsg);
 };

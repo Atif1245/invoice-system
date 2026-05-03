@@ -12,11 +12,11 @@ async function fileToGenerativePart(file) {
   };
 }
 
-export const processImageWithGemini = async (file) => {
-  // Auto-Detects and applies your Master System Key so you NEVER have to paste it!
-  const SYSTEM_KEY = "AIzaSyDeXzV-0jW3umxgrKXDaqZt1CaQtu6V4T8";
-  
-  const genAI = new GoogleGenerativeAI(SYSTEM_KEY);
+export const processImageWithGemini = async (file, apiKey) => {
+  if (!apiKey || apiKey.trim() === '') {
+     throw new Error("API key not valid"); // Triggers auto-removal
+  }
+  const genAI = new GoogleGenerativeAI(apiKey.trim());
   const prompt = `You are a professional supply chain data extraction assistant processing purchase orders and invoices.
 
 FIRST: Analyze the image. Is it a legible Invoice, Purchase Order, Receipt, or Financial Document?

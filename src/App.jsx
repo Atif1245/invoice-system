@@ -51,11 +51,18 @@ function App() {
       const file = e.target.files[0];
       const fileURL = URL.createObjectURL(file);
 
+      // Check API Key
+      if (!apiKey) {
+         alert("Please paste your Google AI Key in the new sidebar input below 'NEW UPLOAD' before scanning. You only need to do this ONCE.");
+         if (fileInputRef.current) fileInputRef.current.value = "";
+         return;
+      }
+
       setIsAnalyzing(true);
 
       try {
         const { processImageWithGemini } = await import('./services/ai.js');
-        const extractedData = await processImageWithGemini(file);
+        const extractedData = await processImageWithGemini(file, apiKey);
 
         if (extractedData.isInvoice === false) {
           alert(`UPLOAD REJECTED!\n\nAI Reason: ${extractedData.error}`);
@@ -93,7 +100,13 @@ function App() {
         navigate('/');
       } catch (error) {
         console.error(error);
-        alert("Failed to process image. Details: " + error.message);
+        if (error?.message?.includes('invalid') || error?.message?.includes('API key not valid')) {
+           setApiKey('');
+           localStorage.removeItem('gemini_api_key');
+           alert("Your API Key was blocked by Google! The key box has reappeared on the left. Please generate a brand NEW key at Google AI Studio and paste it.");
+        } else {
+           alert("Failed to process image. Details: " + error.message);
+        }
       } finally {
         setIsAnalyzing(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -128,7 +141,7 @@ function App() {
           <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>Ansar Sial & Son's</span>
         </div>
 
-        <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <nav className="sidebar-nav">
           <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Briefcase size={18} />
             Dashboard
@@ -150,35 +163,53 @@ function App() {
             Search Docs
           </NavLink>
 
-          <div className="sidebar-upload-section" style={{ marginTop: 'auto' }}>
-            <div className="sidebar-upload-title">NEW UPLOAD</div>
-            <div className="sidebar-drag-zone" onClick={isAnalyzing ? null : triggerUpload} style={{ opacity: isAnalyzing ? 0.5 : 1, cursor: isAnalyzing ? 'not-allowed' : 'pointer' }}>
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-                accept="image/*,application/pdf"
-              />
-              {isAnalyzing ? (
-                <div style={{ padding: '20px 0' }}>
-                  <Zap size={32} color="var(--primary-accent)" style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite' }} />
-                  <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--primary-accent)' }}>AI Scanning...</div>
-                </div>
-              ) : (
-                <>
-                  <CloudUpload size={32} color="var(--primary-accent)" style={{ marginBottom: '12px' }} />
-                  <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                    Upload Document
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    Supports: PDF, JPG, PNG
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
         </nav>
+
+        <div className="sidebar-upload-section" style={{ marginTop: 'auto' }}>
+          <div className="sidebar-upload-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              NEW UPLOAD
+          </div>
+          
+          {!apiKey && (
+            <div style={{ marginBottom: '16px' }}>
+              <input 
+                type="password" 
+                placeholder="Paste Master Key here..." 
+                onChange={(e) => { 
+                  setApiKey(e.target.value); 
+                  localStorage.setItem('gemini_api_key', e.target.value); 
+                }} 
+                style={{ width: '100%', padding: '8px 12px', fontSize: '0.8rem', borderRadius: '8px', background: '#202431', border: '1px solid #4361ee', color: 'white', outline:'none' }} 
+              />
+              <div style={{ fontSize: '0.65rem', color: '#ff4d4d', marginTop: '4px' }}>Never share this key. Paste once to save to device.</div>
+            </div>
+          )}
+          <div className="sidebar-drag-zone" onClick={isAnalyzing ? null : triggerUpload} style={{ opacity: isAnalyzing ? 0.5 : 1, cursor: isAnalyzing ? 'not-allowed' : 'pointer' }}>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              accept="image/*,application/pdf"
+            />
+            {isAnalyzing ? (
+              <div style={{ padding: '20px 0' }}>
+                <Zap size={32} color="var(--primary-accent)" style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite' }} />
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--primary-accent)' }}>AI Scanning...</div>
+              </div>
+            ) : (
+              <>
+                <CloudUpload size={32} color="var(--primary-accent)" style={{ marginBottom: '12px' }} />
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  Upload Document
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  Supports: PDF, JPG, PNG
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         <div style={{ padding: '16px 0', borderTop: '1px solid var(--border-color)' }}>
           <div className="nav-item" onClick={() => setIsAuthenticated(false)} style={{ cursor: 'pointer' }}>

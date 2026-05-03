@@ -222,7 +222,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
       <div className="dashboard-top-row">
 
         {/* Status Panel */}
-        <div className="card-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div className="card-title" style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>
               <FileText size={14} /> Processing Status
@@ -245,7 +245,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
         </div>
 
         {/* Export Data Panel */}
-        <div className="card-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '8px' }}>Export Complete PO Data</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Push all parsed line-items exactly formatted into your Excel sheet.</p>
@@ -263,7 +263,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
       <div className="dashboard-bottom-row" style={{ marginBottom: '24px' }}>
         {/* Source Document Preview */}
         <div className="card-panel" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
             <div className="card-title" style={{ margin: 0 }}>
               <FileText size={16} color="var(--primary-accent)" />
               {latestData ? `Source: ${latestData.poNumber}` : 'Source Document Preview'}
@@ -293,7 +293,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
 
         {/* PO Header Data Summary */}
         <div className="card-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
             <div className="card-title" style={{ margin: 0 }}>
               PO Meta-Data
             </div>
@@ -324,7 +324,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
 
       {/* EXTRACTED LINE ITEMS TABLE */}
       <div className="card-panel">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
           <div className="card-title" style={{ margin: 0 }}>
             <List size={16} color="var(--primary-accent)" />
             Extracted Line Items (Matching PO Tables strictly)
@@ -377,7 +377,7 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
 
       {/* Document Processing History Section */}
       <div className="card-panel" style={{ marginTop: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
           <div className="card-title" style={{ margin: 0 }}>
             <History size={16} color="var(--primary-accent)" />
             Document Processing History Log
@@ -387,38 +387,40 @@ const Dashboard = ({ uploadedFile, uploadHistory }) => {
           </div>
         </div>
 
-        <table className="entities-table">
-          <thead>
-            <tr>
-              <th>Document No.</th>
-              <th>Company</th>
-              <th>Date Processed</th>
-              <th>Lines Extracted</th>
-              <th>Tax / GST</th>
-              <th>Total Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {uploadHistory && uploadHistory.length > 0 ? uploadHistory.map((item) => (
-              <tr key={item.id}>
-                <td style={{ fontWeight: '600', color: 'var(--primary-accent)' }}>
-                  {item.poNumber || item.invoiceNo}
-                </td>
-                <td style={{ fontWeight: '500' }}>{item.company}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{item.date}</td>
-                <td style={{ fontWeight: '500' }}>{item.lineItems ? item.lineItems.length : 0} items</td>
-                <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{item.tax}</td>
-                <td style={{ fontWeight: '600', color: 'var(--success)' }}>{item.total}</td>
-              </tr>
-            )) : (
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table className="entities-table">
+            <thead>
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-                  No documents processed yet. History will appear here.
-                </td>
+                <th>Document No.</th>
+                <th>Company</th>
+                <th>Date Processed</th>
+                <th>Lines Extracted</th>
+                <th>Tax / GST</th>
+                <th>Total Value</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {uploadHistory && uploadHistory.length > 0 ? uploadHistory.map((item) => (
+                <tr key={item.id}>
+                  <td style={{ fontWeight: '600', color: 'var(--primary-accent)' }}>
+                    {item.poNumber || item.invoiceNo}
+                  </td>
+                  <td style={{ fontWeight: '500' }}>{item.company}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{item.date}</td>
+                  <td style={{ fontWeight: '500' }}>{item.lineItems ? item.lineItems.length : 0} items</td>
+                  <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{item.tax}</td>
+                  <td style={{ fontWeight: '600', color: 'var(--success)' }}>{item.total}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+                    No documents processed yet. History will appear here.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
